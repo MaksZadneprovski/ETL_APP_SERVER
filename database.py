@@ -40,6 +40,13 @@ def get_structure(engineer_id):
             return result[0] if result else None
 
 
+def get_all_structures():
+    with closing(sqlite3.connect(DB_PATH)) as db:
+        with db:
+            result = db.execute('SELECT structure_json FROM structures').fetchall()
+            return [row[0] for row in result]
+
+
 def validate_credentials_db(login, password):
     with closing(sqlite3.connect(DB_PATH)) as db:
         with db:
