@@ -24,17 +24,19 @@
         async function createUser() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const isAdmin = document.getElementById('is_admin').checked;
             const response = await fetch('/user', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ login: username, password: password }),
+                body: JSON.stringify({ login: username, password: password, is_admin: isAdmin }),
             });
             if (response.status === 201) {
                 fetchUsers();
             }
         }
+
 
         async function deleteUser(username) {
             const response = await fetch(`/user/${username}`, {
@@ -52,6 +54,7 @@
     <h1>User Management</h1>
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
+    <input type="checkbox" id="is_admin"> Admin
     <button onclick="createUser()">Create User</button>
     <ul id="userList"></ul>
 </body>

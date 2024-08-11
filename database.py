@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from contextlib import closing
 
@@ -9,7 +10,8 @@ def init_db():
         with db:
             db.execute('CREATE TABLE IF NOT EXISTS reports (report_id TEXT PRIMARY KEY, report_json TEXT)')
             db.execute('CREATE TABLE IF NOT EXISTS structures (engineer_id TEXT PRIMARY KEY, structure_json TEXT)')
-            db.execute('CREATE TABLE IF NOT EXISTS users (login TEXT PRIMARY KEY, password TEXT)')
+            db.execute(
+                'CREATE TABLE IF NOT EXISTS users (login TEXT PRIMARY KEY, password TEXT, is_admin INTEGER DEFAULT 0)')
 
 
 def save_report(report_id, report_json):
@@ -44,20 +46,23 @@ def get_all_structures():
     with closing(sqlite3.connect(DB_PATH)) as db:
         with db:
             result = db.execute('SELECT structure_json FROM structures').fetchall()
-            return [row[0] for row in result]
+            # Десериализация каждой JSON-строки в Python объект
+            structures = [json.loads(row[0]) for row in result]
+            return structures
 
 
 def validate_credentials_db(login, password):
     with closing(sqlite3.connect(DB_PATH)) as db:
-        with db:
-            result = db.execute('SELECT 1 FROM users WHERE login = ? AND password = ?', (login, password)).fetchone()
-            return bool(result)
+        result = db.execute('SELECT is_admin FROM users WHERE login = ? AND password = ?', (login, password)).fetchone()
+        return {"is_valid": bool(result), "is_admin": bool(result[0])} if result else {"is_valid": False,
+                                                                                       "is_admin": False}
 
 
-def create_user(login, password):
+def create_user(login, password, is_admin=False):
     with closing(sqlite3.connect(DB_PATH)) as db:
         with db:
-            db.execute('INSERT INTO users (login, password) VALUES (?, ?)', (login, password))
+            db.execute('INSERT INTO users (login, password, is_admin) VALUES (?, ?, ?)',
+                       (login, password, int(is_admin)))
 
 
 def delete_user(login):

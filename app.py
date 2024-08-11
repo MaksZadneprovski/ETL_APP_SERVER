@@ -53,16 +53,22 @@ def get_structure_endpoint():
 
 @app.route('/getAllStructures', methods=['GET'])
 def get_all_structures_endpoint():
+    # Получаем десериализованные структуры
     structures = get_all_structures()
+    # Используем jsonify для возврата JSON
     return jsonify(structures), 200
+
 
 @app.route('/validateCredentials', methods=['POST'])
 def validate_credentials():
-    data = request.json
     login = request.args.get('login')
     password = request.args.get('password')
-    is_valid = validate_credentials_db(login, password)
-    return 'credentials is valid' if is_valid else 'credentials is invalid', 200
+    credentials = validate_credentials_db(login, password)
+
+    if credentials["is_valid"]:
+        return jsonify({"message": "credentials are valid", "is_admin": credentials["is_admin"]}), 200
+    else:
+        return jsonify({"message": "credentials are invalid"}), 401
 
 
 @app.route('/users', methods=['GET'])
@@ -76,8 +82,10 @@ def create_user_endpoint():
     data = request.json
     login = data.get('login')
     password = data.get('password')
-    create_user(login, password)
+    is_admin = data.get('is_admin', False)
+    create_user(login, password, is_admin)
     return '', 201
+
 
 
 @app.route('/user/<login>', methods=['DELETE'])
@@ -88,4 +96,5 @@ def delete_user_endpoint(login):
 
 if __name__ == '__main__':
     init_db()
+    print(get_all_structures())
     app.run(host='0.0.0.0', port=8085)
